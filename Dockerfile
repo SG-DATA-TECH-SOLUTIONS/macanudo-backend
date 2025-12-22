@@ -12,7 +12,9 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY ./app /app/app
 
+ENV PORT=8080
+
 # Expose the port (documentation purposes, Cloud Run ignores this)
-EXPOSE 8080
+EXPOSE 8080:8080
 
 ENTRYPOINT ["fastapi", "run", "--workers", "4", "--host", "0.0.0.0", "--port", "8080", "app/main.py"]
