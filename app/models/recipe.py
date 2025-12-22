@@ -1,53 +1,59 @@
-# ...existing code...
-from typing import List, Optional
+from typing import Annotated, List, Optional
 import uuid
+from pydantic import BaseModel, Field
 from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models import Product
+from .base import PyObjectId, TimestampModel
 
 
 # --- Recipe Models ---
 
-class RecipeBase(SQLModel):
-    name: str
-    preparation_time: int
-    price: float
-    category: str
+class RecipeIngredientCreate(BaseModel):
+    item_id: PyObjectId
+    quantity: float = Field(gt=0)
+    unit: str = Field(max_length=50)
 
-class Recipe(RecipeBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    
-    ingredients: List["RecipeIngredient"] = Relationship(back_populates="recipe", cascade_delete=True)
 
-class RecipeIngredient(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    recipe_id: uuid.UUID = Field(foreign_key="recipe.id", nullable=False, ondelete="CASCADE")
-    product_id: uuid.UUID = Field(foreign_key="product.id", nullable=False)
-    quantity: float
+class RecipeIngredient(RecipeIngredientCreate):
+    pass
 
-    recipe: Recipe = Relationship(back_populates="ingredients")
-    product: Product = Relationship(back_populates="recipe_ingredients")
 
-class RecipeIngredientCreate(SQLModel):
-    product_id: uuid.UUID
-    quantity: float
+class RecipeBase(TimestampModel):
+    name: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=500)
+    product_id: PyObjectId
+    yield_quantity: float = Field(gt=0, default=1.0)
+    yield_unit: str = Field(max_length=50, default="unit")
+    instructions: str | None = Field(default=None, max_length=2000)
+    is_active: bool = True
+
 
 class RecipeCreate(RecipeBase):
-    ingredients: List[RecipeIngredientCreate]
+    ingredients: list[RecipeIngredientCreate]
 
-class RecipeUpdate(SQLModel):
-    name: str | None = None
-    preparation_time: int | None = None
-    price: float | None = None
-    category: str | None = None
+
+class RecipeUpdate(TimestampModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=500)
+    product_id: PyObjectId | None = None
+    yield_quantity: float | None = Field(default=None, gt=0)
+    yield_unit: str | None = Field(default=None, max_length=50)
+    instructions: str | None = Field(default=None, max_length=2000)
+    is_active: bool | None = None
+    ingredients: list[RecipeIngredientCreate] | None = None
+
 
 class RecipePublic(RecipeBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    ingredients: List[RecipeIngredientCreate]
+    id: Annotated[PyObjectId, Field(alias="_id")]
+    ingredients: list[RecipeIngredient]
 
-class RecipesPublic(SQLModel):
-    data: List[RecipePublic]
+
+class RecipesPublic(TimestampModel):
+    data: list[RecipePublic]
     count: int
+
+
+class Recipe(RecipeBase):
+    ingredients: list[RecipeIngredient] = Field(default_factory=list)

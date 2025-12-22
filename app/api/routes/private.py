@@ -3,7 +3,11 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.api.deps import SessionDep
+from app.api.deps import (
+    CurrentUser,
+    DatabaseDep,
+    get_current_active_superuser,
+)
 from app.core.security import get_password_hash
 from app.models import (
     User,
@@ -21,18 +25,12 @@ class PrivateUserCreate(BaseModel):
 
 
 @router.post("/users/", response_model=UserPublic)
-def create_user(user_in: PrivateUserCreate, session: SessionDep) -> Any:
-    """
-    Create a new user.
-    """
+async def create_user(*, db: DatabaseDep, user_in: PrivateUserCreate) -> Any:
+    """Create new user."""
+    user_dict = user_in.model_dump(exclude={"password"})
+    user_dict["hashed_password"] = get_password_hash(user_in.password)
 
-    user = User(
-        email=user_in.email,
-        full_name=user_in.full_name,
-        hashed_password=get_password_hash(user_in.password),
-    )
+    result = await db.users.insert_one(user_dict)
+    user_dict["_id"] = result.inserted_id
 
-    session.add(user)
-    session.commit()
-
-    return user
+    return User(**user_dict)
