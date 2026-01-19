@@ -2,7 +2,7 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
+from app.models import Item, ItemCreate, ItemUpdate, User, UserCreate, UserUpdate
 
 
 async def create_user(db: AsyncIOMotorDatabase, user_create: UserCreate) -> User:

@@ -1,4 +1,3 @@
-import uuid
 from typing import Any
 
 from bson import ObjectId
@@ -11,7 +10,6 @@ from app.models import (
     RecipeCreate,
     RecipePublic,
     RecipesPublic,
-    RecipeUpdate,
 )
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])

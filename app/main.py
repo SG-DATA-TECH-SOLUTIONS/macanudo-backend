@@ -56,3 +56,18 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+users_ref = db.collection("macanudo")
+docs = users_ref.stream()
+
+for doc in docs:
+    print(f"{doc.id} => {doc.to_dict()}")
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    await connect_to_mongo()
+
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    await close_mongo_connection()

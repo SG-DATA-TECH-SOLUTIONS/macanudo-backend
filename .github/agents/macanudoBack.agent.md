@@ -1,7 +1,11 @@
-# FastAPI Backend - AI Coding Agent Instructions
-# FastAPI Backend - Copilot Instructions (condensed)
+---
+description: 'Describe what this custom agent does and when to use it.'
+tools: ['runCommands', 'runTasks', 'edit', 'runNotebooks', 'search', 'new', 'MCP_DOCKER/*', 'pylance mcp server/*', 'extensions', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'openSimpleBrowser', 'fetch', 'githubRepo', 'ms-python.python/getPythonEnvironmentInfo', 'ms-python.python/getPythonExecutableCommand', 'ms-python.python/installPythonPackage', 'ms-python.python/configurePythonEnvironment', 'todos', 'runSubagent', 'runTests']
+---
 
-This backend is a FastAPI service using SQLModel + PostgreSQL. Keep instructions short and concrete for fast agent onboarding.
+# FastAPI Backend - AI Coding Agent Instructions
+
+## Project Architecture
 
 This is a FastAPI backend using **MongoDB** (NoSQL) with Motor (async MongoDB driver) and Pydantic for data validation. The codebase follows a layered architecture optimized for document-based storage:
 
@@ -96,7 +100,7 @@ async def create_recipe(
 
 See `app/api/routes/recipes.py` and `app/api/routes/sales.py` for complete examples.
 
-- **Auth**: OAuth2 JWT tokens; `sub` is user id. Use `CurrentUser` dependency. Superuser checks via `get_current_active_superuser` in `app/api/deps.py`.
+## Critical Patterns
 
 ### Database Access (Motor Async)
 ```python

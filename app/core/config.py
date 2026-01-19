@@ -7,6 +7,7 @@ from pydantic import (
     BeforeValidator,
     EmailStr,
     HttpUrl,
+    computed_field,
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,8 +24,8 @@ def parse_cors(v: Any) -> list[str] | str:
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        # Use .env file in the project root directory
-        env_file=".env",
+        # Use ../.env file (parent directory relative to backend/)
+        env_file="../.env",
         env_ignore_empty=True,
         extra="ignore",
     )
@@ -47,10 +48,10 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None
-
+    
     # MongoDB settings
     MONGODB_URL: str
-    MONGODB_DB_NAME: str = "macanudo"
+    MONGODB_DATABASE: str
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
