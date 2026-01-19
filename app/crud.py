@@ -1,54 +1,60 @@
-import uuid
-from typing import Any
-
-from sqlmodel import Session, select
+from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.core.security import get_password_hash, verify_password
 from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
 
 
-def create_user(*, session: Session, user_create: UserCreate) -> User:
-    db_obj = User.model_validate(
-        user_create, update={"hashed_password": get_password_hash(user_create.password)}
-    )
-    session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
+async def create_user(db: AsyncIOMotorDatabase, user_create: UserCreate) -> User:
+    """Create new user."""
+    user_dict = user_create.model_dump(exclude={"password"})
+    user_dict["hashed_password"] = get_password_hash(user_create.password)
+
+    result = await db.users.insert_one(user_dict)
+    user_dict["_id"] = result.inserted_id
+
+    return User(**user_dict)
 
 
-def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
-    user_data = user_in.model_dump(exclude_unset=True)
-    extra_data = {}
-    if "password" in user_data:
-        password = user_data["password"]
-        hashed_password = get_password_hash(password)
-        extra_data["hashed_password"] = hashed_password
-    db_user.sqlmodel_update(user_data, update=extra_data)
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-    return db_user
+async def update_user(
+    db: AsyncIOMotorDatabase, user_id: str, user_in: UserUpdate
+) -> User | None:
+    """Update user."""
+    update_data = user_in.model_dump(exclude_unset=True, exclude={"password"})
+
+    if user_in.password:
+        update_data["hashed_password"] = get_password_hash(user_in.password)
+
+    if update_data:
+        update_data["updated_at"] = user_in.updated_at
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)}, {"$set": update_data}
+        )
+
+    return await get_user_by_id(db, user_id)
 
 
-def get_user_by_email(*, session: Session, email: str) -> User | None:
-    statement = select(User).where(User.email == email)
-    session_user = session.exec(statement).first()
-    return session_user
+async def get_user_by_email(db: AsyncIOMotorDatabase, email: str) -> User | None:
+    """Get user by email."""
+    user_dict = await db.users.find_one({"email": email})
+    if user_dict:
+        return User(**user_dict)
+    return None
 
 
-def authenticate(*, session: Session, email: str, password: str) -> User | None:
-    db_user = get_user_by_email(session=session, email=email)
-    if not db_user:
+async def get_user_by_id(db: AsyncIOMotorDatabase, user_id: str) -> User | None:
+    """Get user by ID."""
+    user_dict = await db.users.find_one({"_id": ObjectId(user_id)})
+    if user_dict:
+        return User(**user_dict)
+    return None
+
+
+async def authenticate(db: AsyncIOMotorDatabase, email: str, password: str) -> User | None:
+    """Authenticate user."""
+    user = await get_user_by_email(db, email)
+    if not user:
         return None
-    if not verify_password(password, db_user.hashed_password):
+    if not verify_password(password, user.hashed_password):
         return None
-    return db_user
-
-
-def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -> Item:
-    db_item = Item.model_validate(item_in, update={"owner_id": owner_id})
-    session.add(db_item)
-    session.commit()
-    session.refresh(db_item)
-    return db_item
+    return user

@@ -1,53 +1,61 @@
-# ...existing code...
-from typing import List, Optional
-import uuid
-from sqlalchemy import JSON, Column
-from sqlmodel import Field, Relationship, SQLModel
+from typing import Annotated, Literal
+from pydantic import BaseModel, Field
+from .base import PyObjectId, TimestampModel
 
-# --- Sale Models ---
 
-class SaleItem(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    sale_id: uuid.UUID = Field(foreign_key="sale.id", nullable=False, ondelete="CASCADE")
-    name: str
-    quantity: float
-    price: float
-    product_id: uuid.UUID | None = Field(default=None, foreign_key="product.id") # Optional link
+class SaleItemCreate(BaseModel):
+    product_id: PyObjectId
+    quantity: float = Field(gt=0)
+    unit_price: float = Field(ge=0)
+    discount: float = Field(ge=0, default=0)
 
-class SaleBase(SQLModel):
-    total: float
+
+class SaleItem(SaleItemCreate):
+    subtotal: float = Field(ge=0)
+
+
+class SaleCreate(TimestampModel):
+    customer_name: str | None = Field(default=None, max_length=255)
+    customer_email: str | None = Field(default=None, max_length=255)
+    customer_phone: str | None = Field(default=None, max_length=50)
+    payment_method: Literal["cash", "card", "transfer", "other"]
+    items: list[SaleItemCreate]
+    notes: str | None = Field(default=None, max_length=1000)
+
+
+class SalePublic(TimestampModel):
+    id: Annotated[PyObjectId, Field(alias="_id")]
+    sale_number: str
+    customer_name: str | None
+    customer_email: str | None
+    customer_phone: str | None
     payment_method: str
-    timestamp: int # Unix timestamp
-    waiter_name: str
-    event: str | None = None
-    other_error_reason: str | None = None
-    other_error_notes: str | None = None
-    general_notes: str | None = None
-    
-    # Complex JSON fields
-    errors: dict = Field(default={}, sa_column=Column(JSON))
-    return_data: dict | None = Field(default=None, sa_column=Column(JSON))
+    items: list[SaleItem]
+    subtotal: float
+    tax: float
+    discount: float
+    total: float
+    status: str
+    user_id: PyObjectId
+    notes: str | None
 
-class Sale(SaleBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    
-    items: List[SaleItem] = Relationship(back_populates="sale", cascade_delete=True)
 
-class SaleItemCreate(SQLModel):
-    name: str
-    quantity: float
-    price: float
-    product_id: uuid.UUID | None = None
-
-class SaleCreate(SaleBase):
-    items: List[SaleItemCreate]
-
-class SalePublic(SaleBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    items: List[SaleItemCreate]
-
-class SalesPublic(SQLModel):
-    data: List[SalePublic]
+class SalesPublic(TimestampModel):
+    data: list[SalePublic]
     count: int
+
+
+class Sale(TimestampModel):
+    sale_number: str = Field(unique=True, max_length=50)
+    customer_name: str | None = Field(default=None, max_length=255)
+    customer_email: str | None = Field(default=None, max_length=255)
+    customer_phone: str | None = Field(default=None, max_length=50)
+    payment_method: Literal["cash", "card", "transfer", "other"]
+    items: list[SaleItem] = Field(default_factory=list)
+    subtotal: float = Field(ge=0)
+    tax: float = Field(ge=0, default=0)
+    discount: float = Field(ge=0, default=0)
+    total: float = Field(ge=0)
+    status: Literal["pending", "completed", "cancelled"] = "completed"
+    user_id: PyObjectId
+    notes: str | None = Field(default=None, max_length=1000)

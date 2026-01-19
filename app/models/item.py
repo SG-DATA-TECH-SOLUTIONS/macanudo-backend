@@ -1,43 +1,43 @@
-import uuid
-from typing import TYPE_CHECKING
-
-from sqlmodel import Field, Relationship, SQLModel
+from typing import TYPE_CHECKING, Annotated
+from pydantic import Field
+from .base import PyObjectId, TimestampModel
 
 if TYPE_CHECKING:
     from .user import User
 
 
 # Shared properties
-class ItemBase(SQLModel):
+class ItemBase(TimestampModel):
     title: str = Field(min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=255)
 
 
 # Properties to receive on item creation
 class ItemCreate(ItemBase):
-    pass
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=255)
 
 
 # Properties to receive on item update
-class ItemUpdate(ItemBase):
+class ItemUpdate(TimestampModel):
     title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
-
-
-# Database model, database table inferred from class name
-class Item(ItemBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
-    )
-    owner: "User | None" = Relationship(back_populates="items")
+    description: str | None = Field(default=None, max_length=255)
 
 
 # Properties to return via API, id is always required
 class ItemPublic(ItemBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
+    id: Annotated[PyObjectId, Field(alias="_id")]
+    owner_id: PyObjectId
 
 
-class ItemsPublic(SQLModel):
+class ItemsPublic(TimestampModel):
     data: list[ItemPublic]
     count: int
+
+
+# Database model, database table inferred from class name
+class Item(ItemBase):
+    owner_id: PyObjectId
+
+    class Config:
+        collection = "items"

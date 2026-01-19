@@ -1,30 +1,30 @@
-# ...existing code...
-from typing import List, Optional
-import uuid
-from sqlalchemy import JSON, Column
-from sqlmodel import Field, Relationship, SQLModel
+from typing import Annotated, List, Literal
+from pydantic import Field
+from .base import PyObjectId, TimestampModel
 
 # --- Inventory Models ---
 
-class InventoryAdjustmentBase(SQLModel):
-    product_id: uuid.UUID = Field(foreign_key="product.id", nullable=False)
-    quantity: float
-    type: str # 'waste' | 'additional-use' | 'manual-correction'
-    reason: str
-    timestamp: int
-    user_name: str
-
-class InventoryAdjustment(InventoryAdjustmentBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+class InventoryAdjustmentBase(TimestampModel):
+    item_id: PyObjectId
+    adjustment_type: Literal["add", "remove", "set"]
+    quantity: float = Field(gt=0)
+    reason: str | None = Field(default=None, max_length=500)
+    reference: str | None = Field(default=None, max_length=255)
 
 class InventoryAdjustmentCreate(InventoryAdjustmentBase):
     pass
 
 class InventoryAdjustmentPublic(InventoryAdjustmentBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
+    id: Annotated[PyObjectId, Field(alias="_id")]
+    user_id: PyObjectId
+    previous_quantity: float
+    new_quantity: float
 
-class InventoryAdjustmentsPublic(SQLModel):
-    data: List[InventoryAdjustmentPublic]
+class InventoryAdjustmentsPublic(TimestampModel):
+    data: list[InventoryAdjustmentPublic]
     count: int
+
+class InventoryAdjustment(InventoryAdjustmentBase):
+    user_id: PyObjectId
+    previous_quantity: float
+    new_quantity: float

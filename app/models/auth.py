@@ -1,17 +1,15 @@
-from sqlmodel import Field, SQLModel
+from pydantic import BaseModel
 
 
-# JSON payload containing access token
-class Token(SQLModel):
+class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
 
-# Contents of JWT token
-class TokenPayload(SQLModel):
+class TokenPayload(BaseModel):
     sub: str | None = None
 
 
-class NewPassword(SQLModel):
+class NewPassword(BaseModel):
     token: str
-    new_password: str = Field(min_length=8, max_length=128)
+    new_password: str

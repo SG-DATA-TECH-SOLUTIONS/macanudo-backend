@@ -1,4 +1,3 @@
-from sqlmodel import SQLModel
 from .auth import NewPassword, Token, TokenPayload
 from .item import Item, ItemBase, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate
 from .msg import Message
