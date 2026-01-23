@@ -1,12 +1,10 @@
-from collections.abc import AsyncGenerator, Generator
 from typing import Annotated
 
 import jwt
-from bson import ObjectId
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from google.cloud.firestore import Client as FirestoreClient
 from pydantic import ValidationError
 
 from app.core import security
@@ -19,12 +17,12 @@ reusable_oauth2 = OAuth2PasswordBearer(
 )
 
 
-async def get_db() -> AsyncIOMotorDatabase:
-    """Dependency to get MongoDB database instance."""
+def get_db() -> FirestoreClient:
+    """Dependency to get Firestore client instance."""
     return get_database()
 
 
-DatabaseDep = Annotated[AsyncIOMotorDatabase, Depends(get_db)]
+DatabaseDep = Annotated[FirestoreClient, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
 
@@ -44,11 +42,17 @@ async def get_current_user(db: DatabaseDep, token: TokenDep) -> User:
     if not token_data.sub:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user_dict = await db.users.find_one({"_id": ObjectId(token_data.sub)})
-    if not user_dict:
+    # Get user from Firestore
+    user_ref = db.collection("users").document(token_data.sub)
+    user_doc = user_ref.get()
+    
+    if not user_doc.exists:
         raise HTTPException(status_code=404, detail="User not found")
 
+    user_dict = user_doc.to_dict()
+    user_dict["id"] = user_doc.id
     user = User(**user_dict)
+    
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
 

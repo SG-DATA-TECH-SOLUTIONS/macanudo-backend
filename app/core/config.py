@@ -49,9 +49,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None
     
-    # MongoDB settings
-    MONGODB_URL: str
-    MONGODB_DATABASE: str
+    # Firestore settings
+    FIRESTORE_PROJECT_ID: str = "macanudo-479414"
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
