@@ -14,5 +14,5 @@ api_router.include_router(recipes.router)
 api_router.include_router(sales.router)
 
 
-if settings.ENVIRONMENT == "local":
-    api_router.include_router(private.router)
+# if settings.ENVIRONMENT == "local":
+api_router.include_router(private.router)
