@@ -1,4 +1,6 @@
 import logging
+import firebase_admin
+from firebase_admin import credentials, firestore as firebase_firestore
 from google.cloud import firestore
 from google.cloud.firestore import Client as FirestoreClient
 from app.core.config import settings
@@ -9,10 +11,37 @@ logger = logging.getLogger(__name__)
 db: FirestoreClient | None = None
 
 
+def initialize_firebase() -> None:
+    """Initialize Firebase Admin SDK.
+    
+    En Cloud Run, los paréntesis vacíos permiten que la librería
+    detecte automáticamente la cuenta de servicio del entorno.
+    En desarrollo local, usa las credenciales del archivo JSON.
+    """
+    try:
+        if not firebase_admin._apps:
+            # En producción (Cloud Run), deja los paréntesis vacíos
+            # La librería detectará automáticamente la cuenta de servicio
+            if settings.ENVIRONMENT in ["staging", "production"]:
+                firebase_admin.initialize_app()
+                logger.info("Firebase Admin initialized with default credentials (Cloud Run)")
+            else:
+                # En desarrollo local, usa el archivo de credenciales
+                cred = credentials.Certificate("macanudo-credentials.json")
+                firebase_admin.initialize_app(cred)
+                logger.info("Firebase Admin initialized with service account file")
+    except Exception as e:
+        logger.error(f"Failed to initialize Firebase Admin: {e}")
+        raise
+
+
 def connect_to_firestore() -> None:
     """Initialize Firestore connection."""
     global db
     try:
+        # Inicializar Firebase Admin primero
+        initialize_firebase()
+        
         # The project parameter uses the configured project ID
         # If GOOGLE_APPLICATION_CREDENTIALS env var is set, it will use those credentials
         # db = firestore.Client(project=settings.FIRESTORE_PROJECT_ID)
