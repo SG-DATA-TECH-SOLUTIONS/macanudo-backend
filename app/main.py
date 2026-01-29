@@ -8,7 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
-from app.core.database import close_mongo_connection, connect_to_mongo, create_indexes
+from app.core.database import close_firestore_connection, connect_to_firestore, create_indexes
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     logger.info("Starting application...")
-    await connect_to_mongo()
+    connect_to_firestore()
     await create_indexes()
     logger.info("Application started successfully")
 
@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down application...")
-    await close_mongo_connection()
+    close_firestore_connection()
     logger.info("Application shutdown complete")
 
 

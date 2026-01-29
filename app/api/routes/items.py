@@ -1,7 +1,5 @@
-import uuid
 from typing import Any
 
-from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentUser, DatabaseDep
@@ -31,10 +29,7 @@ async def read_items(
 @router.get("/{id}", response_model=ItemPublic)
 async def read_item(db: DatabaseDep, current_user: CurrentUser, id: str) -> Any:
     """Get item by ID."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid item ID")
-
-    item_dict = await db.items.find_one({"_id": ObjectId(id)})
+    item_dict = await db.items.find_one({"_id": id})
     if not item_dict:
         raise HTTPException(status_code=404, detail="Item not found")
 
@@ -64,10 +59,7 @@ async def update_item(
     *, db: DatabaseDep, current_user: CurrentUser, id: str, item_in: ItemUpdate
 ) -> Any:
     """Update an item."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid item ID")
-
-    item_dict = await db.items.find_one({"_id": ObjectId(id)})
+    item_dict = await db.items.find_one({"_id": id})
     if not item_dict:
         raise HTTPException(status_code=404, detail="Item not found")
 
@@ -77,19 +69,16 @@ async def update_item(
 
     update_data = item_in.model_dump(exclude_unset=True)
     if update_data:
-        await db.items.update_one({"_id": ObjectId(id)}, {"$set": update_data})
+        await db.items.update_one({"_id": id}, {"$set": update_data})
 
-    updated_item_dict = await db.items.find_one({"_id": ObjectId(id)})
+    updated_item_dict = await db.items.find_one({"_id": id})
     return Item(**updated_item_dict)
 
 
 @router.delete("/{id}")
 async def delete_item(db: DatabaseDep, current_user: CurrentUser, id: str) -> Message:
     """Delete an item."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid item ID")
-
-    item_dict = await db.items.find_one({"_id": ObjectId(id)})
+    item_dict = await db.items.find_one({"_id": id})
     if not item_dict:
         raise HTTPException(status_code=404, detail="Item not found")
 
@@ -97,5 +86,5 @@ async def delete_item(db: DatabaseDep, current_user: CurrentUser, id: str) -> Me
     if not current_user.is_superuser and str(item.owner_id) != str(current_user.id):
         raise HTTPException(status_code=400, detail="Not enough permissions")
 
-    await db.items.delete_one({"_id": ObjectId(id)})
+    await db.items.delete_one({"_id": id})
     return Message(message="Item deleted successfully")

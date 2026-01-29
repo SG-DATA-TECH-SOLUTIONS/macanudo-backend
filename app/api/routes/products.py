@@ -1,7 +1,5 @@
-import uuid
 from typing import Any
 
-from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentUser, DatabaseDep
@@ -32,10 +30,7 @@ async def read_products(
 @router.get("/{id}", response_model=ProductPublic)
 async def read_product(db: DatabaseDep, current_user: CurrentUser, id: str) -> Any:
     """Get product by ID."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid product ID")
-
-    product_dict = await db.products.find_one({"_id": ObjectId(id)})
+    product_dict = await db.products.find_one({"_id": id})
     if not product_dict:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -52,7 +47,7 @@ async def create_product(
     result = await db.products.insert_one(product_dict)
     product_dict["_id"] = result.inserted_id
 
-    return Product(**product_dict)
+    return ProductPublic(**product_dict)
 
 
 @router.put("/{id}", response_model=ProductPublic)
@@ -60,18 +55,15 @@ async def update_product(
     *, db: DatabaseDep, current_user: CurrentUser, id: str, product_in: ProductUpdate
 ) -> Any:
     """Update a product."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid product ID")
-
-    product_dict = await db.products.find_one({"_id": ObjectId(id)})
+    product_dict = await db.products.find_one({"_id": id})
     if not product_dict:
         raise HTTPException(status_code=404, detail="Product not found")
 
     update_data = product_in.model_dump(exclude_unset=True)
     if update_data:
-        await db.products.update_one({"_id": ObjectId(id)}, {"$set": update_data})
+        await db.products.update_one({"_id": id}, {"$set": update_data})
 
-    updated_product_dict = await db.products.find_one({"_id": ObjectId(id)})
+    updated_product_dict = await db.products.find_one({"_id": id})
     return Product(**updated_product_dict)
 
 
@@ -80,19 +72,16 @@ async def delete_product(
     db: DatabaseDep, current_user: CurrentUser, id: str
 ) -> Message:
     """Delete a product."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid product ID")
-
-    product_dict = await db.products.find_one({"_id": ObjectId(id)})
+    product_dict = await db.products.find_one({"_id": id})
     if not product_dict:
         raise HTTPException(status_code=404, detail="Product not found")
 
     # Check if product is used in recipes
-    recipe_count = await db.recipes.count_documents({"product_id": ObjectId(id)})
+    recipe_count = await db.recipes.count_documents({"product_id": id})
     if recipe_count > 0:
         raise HTTPException(
             status_code=400, detail="Cannot delete product that is used in recipes"
         )
 
-    await db.products.delete_one({"_id": ObjectId(id)})
+    await db.products.delete_one({"_id": id})
     return Message(message="Product deleted successfully")

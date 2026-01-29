@@ -1,8 +1,6 @@
-import uuid
 from typing import Any
 from datetime import datetime, timezone
 
-from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentUser, DatabaseDep
@@ -26,10 +24,7 @@ async def read_sales(
 @router.get("/{id}", response_model=SalePublic)
 async def read_sale(db: DatabaseDep, current_user: CurrentUser, id: str) -> Any:
     """Get sale by ID."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid sale ID")
-    
-    sale_dict = await db.sales.find_one({"_id": ObjectId(id)})
+    sale_dict = await db.sales.find_one({"_id": id})
     if not sale_dict:
         raise HTTPException(status_code=404, detail="Sale not found")
     
@@ -104,10 +99,7 @@ async def create_sale(
 @router.delete("/{id}")
 async def delete_sale(db: DatabaseDep, current_user: CurrentUser, id: str) -> Message:
     """Delete a sale (cancel)."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid sale ID")
-    
-    sale_dict = await db.sales.find_one({"_id": ObjectId(id)})
+    sale_dict = await db.sales.find_one({"_id": id})
     if not sale_dict:
         raise HTTPException(status_code=404, detail="Sale not found")
     
@@ -124,7 +116,7 @@ async def delete_sale(db: DatabaseDep, current_user: CurrentUser, id: str) -> Me
     
     # Mark as cancelled instead of deleting
     await db.sales.update_one(
-        {"_id": ObjectId(id)},
+        {"_id": id},
         {"$set": {"status": "cancelled", "updated_at": datetime.now(timezone.utc)}}
     )
     

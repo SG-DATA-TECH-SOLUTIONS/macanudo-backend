@@ -1,7 +1,6 @@
 from typing import Any
 from datetime import datetime, timezone
 
-from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentUser, DatabaseDep

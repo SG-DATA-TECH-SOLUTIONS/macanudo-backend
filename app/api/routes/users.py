@@ -1,6 +1,5 @@
 from typing import Any
 
-from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
 
 from app import crud
@@ -151,9 +150,6 @@ async def read_user_by_id(
     user_id: str, db: DatabaseDep, current_user: CurrentUser
 ) -> Any:
     """Get a specific user by id."""
-    if not ObjectId.is_valid(user_id):
-        raise HTTPException(status_code=400, detail="Invalid user ID")
-
     user = await crud.get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -181,9 +177,6 @@ async def update_user(
     user_in: UserUpdate,
 ) -> Any:
     """Update a user."""
-    if not ObjectId.is_valid(user_id):
-        raise HTTPException(status_code=400, detail="Invalid user ID")
-
     db_user = await crud.get_user_by_id(db, user_id)
     if not db_user:
         raise HTTPException(
@@ -207,9 +200,6 @@ async def delete_user(
     db: DatabaseDep, current_user: CurrentUser, user_id: str
 ) -> Message:
     """Delete a user."""
-    if not ObjectId.is_valid(user_id):
-        raise HTTPException(status_code=400, detail="Invalid user ID")
-
     user = await crud.get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -219,7 +209,7 @@ async def delete_user(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
 
-    await db.items.delete_many({"owner_id": ObjectId(user_id)})
-    await db.users.delete_one({"_id": ObjectId(user_id)})
+    await db.items.delete_many({"owner_id": user_id})
+    await db.users.delete_one({"_id": user_id})
 
     return Message(message="User deleted successfully")

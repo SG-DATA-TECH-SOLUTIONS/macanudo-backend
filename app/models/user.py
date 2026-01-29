@@ -1,13 +1,13 @@
 from typing import Annotated
 from pydantic import EmailStr, Field
-from .base import PyObjectId, TimestampModel
+from .base import TimestampModel
 
 
 class UserBase(TimestampModel):
     email: EmailStr = Field(unique=True, max_length=255)
     is_active: bool = True
     is_superuser: bool = False
-    full_name: str | None = Field(default=None, max_length=255)
+    full_name: str | None = None
 
 
 class UserCreate(TimestampModel):
@@ -41,7 +41,7 @@ class UpdatePassword(TimestampModel):
 
 
 class UserPublic(TimestampModel):
-    id: Annotated[PyObjectId, Field(alias="_id")]
+    id: Annotated[str, Field(alias="_id")]
     email: EmailStr
     is_active: bool
     is_superuser: bool

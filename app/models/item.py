@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Annotated
 from pydantic import Field
-from .base import PyObjectId, TimestampModel
+from .base import TimestampModel
 
 if TYPE_CHECKING:
     from .user import User
@@ -26,8 +26,8 @@ class ItemUpdate(TimestampModel):
 
 # Properties to return via API, id is always required
 class ItemPublic(ItemBase):
-    id: Annotated[PyObjectId, Field(alias="_id")]
-    owner_id: PyObjectId
+    id: Annotated[str, Field(alias="_id")]
+    owner_id: str
 
 
 class ItemsPublic(TimestampModel):
@@ -37,7 +37,7 @@ class ItemsPublic(TimestampModel):
 
 # Database model, database table inferred from class name
 class Item(ItemBase):
-    owner_id: PyObjectId
+    owner_id: str
 
     class Config:
         collection = "items"

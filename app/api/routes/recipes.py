@@ -1,7 +1,5 @@
-import uuid
 from typing import Any
 
-from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentUser, DatabaseDep
@@ -11,7 +9,7 @@ from app.models import (
     RecipeCreate,
     RecipePublic,
     RecipesPublic,
-    RecipeUpdate,
+    RecipeUpdate
 )
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -32,10 +30,7 @@ async def read_recipes(
 @router.get("/{id}", response_model=RecipePublic)
 async def read_recipe(db: DatabaseDep, current_user: CurrentUser, id: str) -> Any:
     """Get recipe by ID."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid recipe ID")
-
-    recipe_dict = await db.recipes.find_one({"_id": ObjectId(id)})
+    recipe_dict = await db.recipes.find_one({"_id": id})
     if not recipe_dict:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
@@ -72,10 +67,7 @@ async def update_recipe(
     *, db: DatabaseDep, current_user: CurrentUser, id: str, recipe_in: RecipeUpdate
 ) -> Any:
     """Update a recipe."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid recipe ID")
-
-    recipe_dict = await db.recipes.find_one({"_id": ObjectId(id)})
+    recipe_dict = await db.recipes.find_one({"_id": id})
     if not recipe_dict:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
@@ -97,21 +89,18 @@ async def update_recipe(
                 )
 
     if update_data:
-        await db.recipes.update_one({"_id": ObjectId(id)}, {"$set": update_data})
+        await db.recipes.update_one({"_id": id}, {"$set": update_data})
 
-    updated_recipe_dict = await db.recipes.find_one({"_id": ObjectId(id)})
+    updated_recipe_dict = await db.recipes.find_one({"_id": id})
     return Recipe(**updated_recipe_dict)
 
 
 @router.delete("/{id}")
 async def delete_recipe(db: DatabaseDep, current_user: CurrentUser, id: str) -> Message:
     """Delete a recipe."""
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="Invalid recipe ID")
-
-    recipe_dict = await db.recipes.find_one({"_id": ObjectId(id)})
+    recipe_dict = await db.recipes.find_one({"_id": id})
     if not recipe_dict:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
-    await db.recipes.delete_one({"_id": ObjectId(id)})
+    await db.recipes.delete_one({"_id": id})
     return Message(message="Recipe deleted successfully")

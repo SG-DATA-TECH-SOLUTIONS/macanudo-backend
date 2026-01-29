@@ -1,10 +1,10 @@
 from typing import Annotated, Literal
 from pydantic import BaseModel, Field
-from .base import PyObjectId, TimestampModel
+from .base import TimestampModel
 
 
 class SaleItemCreate(BaseModel):
-    product_id: PyObjectId
+    product_id: str
     quantity: float = Field(gt=0)
     unit_price: float = Field(ge=0)
     discount: float = Field(ge=0, default=0)
@@ -24,7 +24,7 @@ class SaleCreate(TimestampModel):
 
 
 class SalePublic(TimestampModel):
-    id: Annotated[PyObjectId, Field(alias="_id")]
+    id: Annotated[str, Field(alias="_id")]
     sale_number: str
     customer_name: str | None
     customer_email: str | None
@@ -36,7 +36,7 @@ class SalePublic(TimestampModel):
     discount: float
     total: float
     status: str
-    user_id: PyObjectId
+    user_id: str
     notes: str | None
 
 
@@ -57,5 +57,5 @@ class Sale(TimestampModel):
     discount: float = Field(ge=0, default=0)
     total: float = Field(ge=0)
     status: Literal["pending", "completed", "cancelled"] = "completed"
-    user_id: PyObjectId
+    user_id: str
     notes: str | None = Field(default=None, max_length=1000)

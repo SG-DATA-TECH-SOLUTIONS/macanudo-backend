@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.api.deps import (
@@ -9,10 +9,7 @@ from app.api.deps import (
     get_current_active_superuser,
 )
 from app.core.security import get_password_hash
-from app.models import (
-    User,
-    UserPublic,
-)
+from app.models import UserCreate, UserPublic
 
 router = APIRouter(tags=["private"], prefix="/private")
 
@@ -21,7 +18,6 @@ class PrivateUserCreate(BaseModel):
     email: str
     password: str
     full_name: str
-    is_verified: bool = False
 
 
 @router.post("/users/", response_model=UserPublic)
