@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1
 
@@ -11,6 +11,10 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY ./app /app/app
+
+COPY ./.env /app/.env
+COPY ./macanudo-credentials.json /app/macanudo-credentials.json
+
 
 ENV PORT=8080
 
