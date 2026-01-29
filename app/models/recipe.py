@@ -1,17 +1,14 @@
 from typing import Annotated, List, Optional
 import uuid
 from pydantic import BaseModel, Field
-from sqlalchemy import JSON, Column
-from sqlmodel import Field, Relationship, SQLModel
-
 from app.models import Product
-from .base import PyObjectId, TimestampModel
+from .base import TimestampModel
 
 
 # --- Recipe Models ---
 
 class RecipeIngredientCreate(BaseModel):
-    item_id: PyObjectId
+    item_id: str
     quantity: float = Field(gt=0)
     unit: str = Field(max_length=50)
 
@@ -23,7 +20,7 @@ class RecipeIngredient(RecipeIngredientCreate):
 class RecipeBase(TimestampModel):
     name: str = Field(min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=500)
-    product_id: PyObjectId
+    product_id: str
     yield_quantity: float = Field(gt=0, default=1.0)
     yield_unit: str = Field(max_length=50, default="unit")
     instructions: str | None = Field(default=None, max_length=2000)
@@ -37,7 +34,7 @@ class RecipeCreate(RecipeBase):
 class RecipeUpdate(TimestampModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=500)
-    product_id: PyObjectId | None = None
+    product_id: str | None = None
     yield_quantity: float | None = Field(default=None, gt=0)
     yield_unit: str | None = Field(default=None, max_length=50)
     instructions: str | None = Field(default=None, max_length=2000)
@@ -46,7 +43,7 @@ class RecipeUpdate(TimestampModel):
 
 
 class RecipePublic(RecipeBase):
-    id: Annotated[PyObjectId, Field(alias="_id")]
+    id: Annotated[str, Field(alias="_id")]
     ingredients: list[RecipeIngredient]
 
 

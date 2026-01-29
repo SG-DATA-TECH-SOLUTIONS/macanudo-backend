@@ -15,7 +15,8 @@ def connect_to_firestore() -> None:
     try:
         # The project parameter uses the configured project ID
         # If GOOGLE_APPLICATION_CREDENTIALS env var is set, it will use those credentials
-        db = firestore.Client(project=settings.FIRESTORE_PROJECT_ID)
+        # db = firestore.Client(project=settings.FIRESTORE_PROJECT_ID)
+        db = firestore.Client(project="macanudo-479414", database="macanudo")
         logger.info(f"Connected to Firestore project: {settings.FIRESTORE_PROJECT_ID}")
     except Exception as e:
         logger.error(f"Failed to connect to Firestore: {e}")

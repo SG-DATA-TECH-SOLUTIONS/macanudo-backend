@@ -1,5 +1,6 @@
 import secrets
 import warnings
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -22,10 +23,17 @@ def parse_cors(v: Any) -> list[str] | str:
     raise ValueError(v)
 
 
+# Determine the correct .env file path
+# Try parent directory first (when running from app/), then current directory
+env_path = Path(__file__).parent.parent.parent / ".env"
+if not env_path.exists():
+    env_path = Path(".env")
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        # Use ../.env file (parent directory relative to backend/)
-        env_file="../.env",
+        # Use .env file - supports both running from app/ and root
+        env_file=str(env_path),
         env_ignore_empty=True,
         extra="ignore",
     )
@@ -51,7 +59,8 @@ class Settings(BaseSettings):
     
     # Firestore settings
     FIRESTORE_PROJECT_ID: str = "macanudo-479414"
-
+    FIRST_SUPERUSER: str
+    FIRST_SUPERUSER_PASSWORD: str
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
     SMTP_PORT: int = 587

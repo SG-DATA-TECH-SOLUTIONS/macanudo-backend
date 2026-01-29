@@ -1,6 +1,6 @@
 from typing import Annotated, List
 from pydantic import Field
-from .base import PyObjectId, TimestampModel
+from .base import TimestampModel
 
 # --- Product Models ---
 
@@ -28,7 +28,7 @@ class ProductUpdate(TimestampModel):
     is_active: bool | None = None
 
 class ProductPublic(ProductBase):
-    id: Annotated[PyObjectId, Field(alias="_id")]
+    id: Annotated[str, Field(alias="_id")]
 
 class ProductsPublic(TimestampModel):
     data: list[ProductPublic]
