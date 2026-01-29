@@ -17,6 +17,7 @@ sentry-sdk[fastapi]>=1.40.6,<2.0.0
 pyjwt>=2.8.0,<3.0.0
 google-cloud-firestore==2.19.0
 google-api-core==2.29.0
+firebase-admin>=6.0.0,<7.0.0
 
 # Development dependencies
 pytest>=7.4.3,<8.0.0
