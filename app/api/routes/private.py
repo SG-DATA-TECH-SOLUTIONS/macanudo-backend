@@ -20,13 +20,13 @@ class PrivateUserCreate(BaseModel):
     full_name: str
 
 
-@router.post("/users/", response_model=UserPublic)
+@router.post("/users/")
 async def create_user(*, db: DatabaseDep, user_in: PrivateUserCreate) -> Any:
     """Create new user."""
     user_dict = user_in.model_dump(exclude={"password"})
     user_dict["hashed_password"] = get_password_hash(user_in.password)
+    
+    doc_ref = db.collection("users").document()
+    doc_ref.set(user_dict)
 
-    result = await db.users.insert_one(user_dict)
-    user_dict["_id"] = result.inserted_id
-
-    return User(**user_dict)
+    return user_dict
